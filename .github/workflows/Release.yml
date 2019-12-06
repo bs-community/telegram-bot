@@ -7,9 +7,9 @@ jobs:
     name: Build & Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v1
       - run: cargo build --release
-      - uses: JasonEtco/upload-to-release@v1
+      - uses: JasonEtco/upload-to-release@master
         with:
           args: target/release/bot
         env:
