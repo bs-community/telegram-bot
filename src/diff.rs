@@ -73,7 +73,15 @@ fn analyze_diff(
     }: Diff,
 ) -> String {
     if !build && !yarn && !composer {
-        return "您可以直接拉取此 commit。".to_string();
+        use rand::seq::IteratorRandom;
+
+        let mut rng = rand::thread_rng();
+        let choices = vec![
+            "您可以直接拉取此 commit。",
+            "赶快拿起 <code>git pull</code>订购吧！",
+            "是朋友，就 <code>git pull</code>。介是你没有用过的船新版本。",
+        ];
+        return choices.into_iter().choose(&mut rng).unwrap().to_string();
     }
 
     let front: &'static str;
@@ -137,7 +145,10 @@ fn test_analyze_diff() {
         composer: false,
     };
 
-    assert_eq!(&analyze_diff(diff.clone()), "您可以直接拉取此 commit。");
+    let analysis = analyze_diff(diff.clone());
+    assert!(!analysis.contains("yarn"));
+    assert!(!analysis.contains("pwsh"));
+    assert!(!analysis.contains("composer"));
 
     diff.yarn = true;
     let analysis = analyze_diff(diff.clone());
