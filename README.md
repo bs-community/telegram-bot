@@ -14,6 +14,17 @@ cargo build
 
 Copy the binary file to anywhere you like or you need.
 
+### Analyzing Blessing Skin
+
+Make sure the current working directory is at the repository of Blessing Skin.
+Run:
+
+```sh
+./bot diff
+```
+
+That's it.
+
 ### Plugins Update
 
 Prepare the plugins JSON file first.
