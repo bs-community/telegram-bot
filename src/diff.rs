@@ -8,7 +8,7 @@ pub async fn execute(bot: &Bot) -> Result<(), DiffError> {
     let head = head?;
     let diff = diff.map(analyze_diff)?;
 
-    bot.send_message(head + "\n" + &diff)
+    bot.send_message(head + "\n" + &diff, "HTML")
         .await
         .map_err(DiffError::from)
 }
@@ -78,15 +78,15 @@ fn analyze_diff(
     let back: &'static str;
 
     if yarn {
-        front = "先执行 `yarn`，然后执行 `pwsh ./scripts/build.ps1`。";
+        front = "先执行 <code>yarn</code>，然后执行 <code>pwsh ./scripts/build.ps1</code>。";
     } else if build {
-        front = "执行 `pwsh ./scripts/build.ps1`。";
+        front = "执行 <code>pwsh ./scripts/build.ps1</code>。";
     } else {
         front = "";
     }
 
     if composer {
-        back = "执行 `composer install`。";
+        back = "执行 <code>composer install</code>。";
     } else {
         back = "";
     }
@@ -96,10 +96,27 @@ fn analyze_diff(
 
 async fn head() -> Result<String, DiffError> {
     let command = Command::new("git")
-        .args(&["log", "--pretty=*%h*: %s", "-1"])
+        .args(&["log", "--pretty=**%h**: %s", "-1"])
         .output()?;
 
-    String::from_utf8(command.stdout).map_err(DiffError::from)
+    String::from_utf8(command.stdout)
+        .map(md2html)
+        .map_err(DiffError::from)
+}
+
+fn md2html(text: String) -> String {
+    use pulldown_cmark::{html, Parser};
+
+    let text = text.replace("<", "&lt;").replace(">", "&gt;");
+    let parser = Parser::new(&text);
+    let mut output = String::new();
+    html::push_html(&mut output, parser);
+
+    output
+        .trim()
+        .trim_start_matches("<p>")
+        .trim_end_matches("</p>")
+        .into()
 }
 
 #[test]
@@ -114,18 +131,18 @@ fn test_analyze_diff() {
 
     diff.yarn = true;
     let analysis = analyze_diff(diff.clone());
-    assert!(analysis.contains("`yarn`"));
+    assert!(analysis.contains("yarn"));
     assert!(analysis.contains("pwsh"));
 
     diff.yarn = false;
     diff.build = true;
     let analysis = analyze_diff(diff.clone());
-    assert!(!analysis.contains("`yarn`"));
+    assert!(!analysis.contains("yarn"));
     assert!(analysis.contains("pwsh"));
 
     diff.composer = true;
     let analysis = analyze_diff(diff.clone());
-    assert!(analysis.contains("`composer install`"));
+    assert!(analysis.contains("composer install"));
 }
 
 #[test]
@@ -135,16 +152,25 @@ fn test_head() {
     let mut runtime = Runtime::new().unwrap();
     runtime.block_on(async move {
         let output = head().await.unwrap();
-        assert!(output.ends_with('\n'));
+        assert!(!output.contains("<p>"));
+        assert!(!output.contains("</p>"));
 
         let parts = output.split(':').collect::<Vec<&str>>();
         let left = parts[0];
         let right = parts[1];
 
-        assert!(left.starts_with('*'));
-        assert!(left.ends_with('*'));
-        assert_eq!(left.len(), 9);
+        assert!(left.starts_with("<strong>"));
+        assert!(left.ends_with("</strong>"));
+        assert_eq!(left.len(), 24);
 
         assert!(right.starts_with(' '));
     });
+}
+
+#[test]
+fn test_md2html() {
+    assert_eq!("&lt;modal&gt;", &md2html(String::from("<modal>")));
+    assert_eq!("&quot;text&quot;", &md2html(String::from("\"text\"")));
+    assert_eq!("&amp;", &md2html(String::from("&")));
+    assert_eq!("<strong>bold</strong>", &md2html(String::from("**bold**")));
 }

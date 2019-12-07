@@ -45,7 +45,9 @@ pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDat
         .join("\n");
     let text = format!("插件更新：\n{}", list);
 
-    bot.send_message(text).await.map_err(PluginDataError::from)
+    bot.send_message(text, None)
+        .await
+        .map_err(PluginDataError::from)
 }
 
 #[test]

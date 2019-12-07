@@ -43,14 +43,18 @@ impl Bot {
         }
     }
 
-    pub async fn send_message<S: Into<String>>(&self, text: S) -> Result<(), BotError> {
+    pub async fn send_message<S, M>(&self, text: S, parse_mode: M) -> Result<(), BotError>
+    where
+        S: Into<String>,
+        M: Into<Option<&'static str>>,
+    {
         let client = reqwest::Client::new();
         let TelegramResponse { ok, description } = client
             .post(&self.url)
             .json(&SendMessage {
                 chat_id: self.chat_id.clone(),
                 text: text.into(),
-                parse_mode: "Markdown",
+                parse_mode: parse_mode.into().unwrap_or("Markdown"),
                 disable_notification: true,
             })
             .send()
