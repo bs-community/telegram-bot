@@ -36,10 +36,11 @@ async fn fetch<P: AsRef<Path>>(path: P) -> Result<PluginsList, PluginDataError> 
 pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDataError> {
     let list = fetch(path).await?;
     if list.is_empty() {
-        return Ok(())
+        return Ok(());
     }
 
-    let list = list.into_iter()
+    let list = list
+        .into_iter()
         .map(|Plugin { name, version }| format!("• *{}* 已更新至 {}", name, version))
         .join("\n");
     let text = format!("插件更新：\n{}", list);
