@@ -4,11 +4,13 @@ use thiserror::Error;
 use tokio::fs;
 
 pub async fn execute(bot: &Bot) -> Result<(), DiffError> {
-    let (head, diff) = futures::join!(head(), diff());
+    let (head, diff, hitokoto) = futures::join!(head(), diff(), hitokoto());
     let head = head?;
     let diff = diff.map(analyze_diff)?;
+    let hitokoto = hitokoto.unwrap_or(String::new());
 
-    bot.send_message(head + "\n" + &diff, "HTML")
+    let message = head + "\n" + &diff + &hitokoto;
+    bot.send_message(message, "HTML")
         .await
         .map_err(DiffError::from)
 }
@@ -102,6 +104,14 @@ async fn head() -> Result<String, DiffError> {
     String::from_utf8(command.stdout)
         .map(md2html)
         .map_err(DiffError::from)
+}
+
+async fn hitokoto() -> Result<String, reqwest::Error> {
+    reqwest::get("https://v1.hitokoto.cn/?encode=text")
+        .await?
+        .text()
+        .await
+        .map(|text| format!("\n---\n{}", text))
 }
 
 fn md2html(text: String) -> String {
