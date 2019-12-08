@@ -59,7 +59,7 @@ impl Bot {
             })
             .send()
             .await?
-            .json::<TelegramResponse>()
+            .json()
             .await?;
 
         if ok {
