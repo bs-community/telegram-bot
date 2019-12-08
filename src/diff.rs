@@ -81,7 +81,15 @@ fn analyze_diff(
             "还在犹豫什么，赶快拿起 <code>git pull</code> 订购吧！",
             "是朋友，就 <code>git pull</code>。介是你没有用过的船新版本。",
         ];
-        return choices.into_iter().choose(&mut rng).unwrap().to_string();
+        return choices
+            .into_iter()
+            .choose(&mut rng)
+            .map(|text| {
+                let mut text = text.to_string();
+                text.push('\n');
+                text
+            })
+            .unwrap();
     }
 
     let front: &'static str;
