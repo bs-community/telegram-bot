@@ -9,7 +9,7 @@ Install Rust with rustup first. Then, run in command line:
 ```sh
 export TELEGRAM_BOT_TOKEN=...
 export TELEGRAM_CHAT_ID=...  # It's the channel ID.
-cargo build
+cargo build --release
 ```
 
 Copy the binary file to anywhere you like or you need.
