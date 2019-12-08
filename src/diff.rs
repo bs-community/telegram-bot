@@ -78,7 +78,7 @@ fn analyze_diff(
         let mut rng = rand::thread_rng();
         let choices = vec![
             "您可以直接拉取此 commit。",
-            "赶快拿起 <code>git pull</code>订购吧！",
+            "还在犹豫什么，赶快拿起 <code>git pull</code> 订购吧！",
             "是朋友，就 <code>git pull</code>。介是你没有用过的船新版本。",
         ];
         return choices.into_iter().choose(&mut rng).unwrap().to_string();
