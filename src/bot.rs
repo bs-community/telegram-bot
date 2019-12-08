@@ -37,9 +37,15 @@ struct SendMessage {
 
 impl Bot {
     pub fn new(token: &str, chat_id: &str) -> Self {
+        let chat_id = if chat_id.starts_with('@') {
+            chat_id.into()
+        } else {
+            String::from("@") + chat_id
+        };
+
         Self {
             url: format!("https://api.telegram.org/bot{}/sendMessage", token),
-            chat_id: chat_id.into(),
+            chat_id,
         }
     }
 

@@ -7,7 +7,7 @@ pub async fn execute(bot: &Bot) -> Result<(), DiffError> {
     let (head, diff, hitokoto) = futures::join!(head(), diff(), hitokoto());
     let head = head?;
     let diff = diff.map(analyze_diff)?;
-    let hitokoto = hitokoto.unwrap_or(String::new());
+    let hitokoto = hitokoto.unwrap_or_default();
 
     let message = head + "\n" + &diff + &hitokoto;
     bot.send_message(message, "HTML")

@@ -25,13 +25,9 @@ async fn main() -> Result<(), MainError> {
     args.next().unwrap();
     let action = &*args.next().expect("Missing action name");
 
-    let mut chat_id = env::var("TELEGRAM_CHAT_ID").expect("Missing Telegram chat ID");
-    if !chat_id.starts_with("@") {
-        chat_id = String::from("@") + &chat_id;
-    }
     let bot = bot::Bot::new(
         &env::var("TELEGRAM_BOT_TOKEN").expect("Missing Telegram bot token"),
-        &chat_id,
+        &env::var("TELEGRAM_CHAT_ID").expect("Missing Telegram chat ID"),
     );
 
     match action {
