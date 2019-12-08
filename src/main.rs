@@ -19,6 +19,8 @@ enum MainError {
 
 #[tokio::main]
 async fn main() -> Result<(), MainError> {
+    println!("BS Telegram Bot: v{}", env!("CARGO_PKG_VERSION"));
+
     let mut args = env::args();
     args.next().unwrap();
     let action = &*args.next().expect("Missing action name");
