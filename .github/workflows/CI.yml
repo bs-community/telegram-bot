@@ -9,5 +9,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
+      - name: Run linter
+        run: cargo clippy
       - name: Run tests
         run: cargo test
