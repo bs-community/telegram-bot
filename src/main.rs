@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate log;
+
+use env_logger::Env;
 use std::env;
 use thiserror::Error;
 
@@ -20,7 +24,9 @@ enum MainError {
 
 #[tokio::main]
 async fn main() -> Result<(), MainError> {
-    println!("BS Telegram Bot: v{}", env!("CARGO_PKG_VERSION"));
+    env_logger::from_env(Env::default().default_filter_or("bot=debug")).init();
+
+    info!("BS Telegram Bot: v{}", env!("CARGO_PKG_VERSION"));
 
     let mut args = env::args();
     args.next().unwrap();
@@ -31,6 +37,7 @@ async fn main() -> Result<(), MainError> {
         &env::var("TELEGRAM_CHAT_ID").expect("Missing Telegram chat ID"),
     );
 
+    info!("Current action is {}", action);
     match action {
         "plugin" => {
             let path = args.next().expect("Missing JSON file path.");

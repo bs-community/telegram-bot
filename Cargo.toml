@@ -12,8 +12,10 @@ name = "bot"
 path = "src/main.rs"
 
 [dependencies]
+env_logger = "0.7"
 futures = "0.3"
 itertools = "0.8"
+log = "0.4"
 pulldown-cmark = "0.6"
 rand = "0.7"
 reqwest = { version = "=0.10.0-alpha.2", features = ["json", "tls"] }

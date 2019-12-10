@@ -40,6 +40,9 @@ async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwe
     };
     let head = head.unwrap_or_else(|| "HEAD".into());
 
+    info!("Base ref is {}", base);
+    info!("Head ref is {}", head);
+
     let Compare { commits, files } = compare(&base, &head).await?;
     let log = format_log(&commits);
     let analysis = analyze_diff(diff(&files));

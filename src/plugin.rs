@@ -36,6 +36,7 @@ async fn fetch<P: AsRef<Path>>(path: P) -> Result<PluginsList, PluginDataError> 
 pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDataError> {
     let list = fetch(path).await?;
     if list.is_empty() {
+        info!("No plugins have been updated.");
         return Ok(());
     }
 

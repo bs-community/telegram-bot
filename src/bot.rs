@@ -54,13 +54,21 @@ impl Bot {
         S: Into<String>,
         M: Into<Option<&'static str>>,
     {
+        let text = text.into();
+        let parse_mode = parse_mode.into().unwrap_or("Markdown");
+
+        debug!(
+            "Content sent to Telegram (parse mode is {}):\n{}",
+            parse_mode, text
+        );
+
         let client = reqwest::Client::new();
         let TelegramResponse { ok, description } = client
             .post(&self.url)
             .json(&SendMessage {
                 chat_id: self.chat_id.clone(),
-                text: text.into(),
-                parse_mode: parse_mode.into().unwrap_or("Markdown"),
+                text,
+                parse_mode,
                 disable_notification: true,
             })
             .send()
@@ -69,11 +77,18 @@ impl Bot {
             .await?;
 
         if ok {
+            info!("Message sent successfully.");
             Ok(())
         } else {
             match description {
-                Some(description) => Err(BotError::Telegram(description)),
-                None => Err(BotError::TelegramUnknown),
+                Some(description) => {
+                    error!("Telegram reported an error: {}", description);
+                    Err(BotError::Telegram(description))
+                }
+                None => {
+                    error!("An unknown Telegram error occurred.");
+                    Err(BotError::TelegramUnknown)
+                }
             }
         }
     }
