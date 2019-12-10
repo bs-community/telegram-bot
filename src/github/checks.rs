@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct CheckSuite {
-    head_sha: String,
+    before: String,
 }
 
 #[derive(Deserialize)]
@@ -30,7 +30,7 @@ pub async fn last_checked_commit() -> Result<Option<String>, reqwest::Error> {
     } else {
         check_suites
             .last()
-            .map(|check_suite| check_suite.head_sha.clone())
+            .map(|check_suite| check_suite.before.clone())
     };
     Ok(sha)
 }
