@@ -3,6 +3,7 @@ use thiserror::Error;
 
 mod bot;
 mod diff;
+mod github;
 mod plugin;
 
 #[derive(Error, Debug)]
@@ -35,7 +36,13 @@ async fn main() -> Result<(), MainError> {
             let path = args.next().expect("Missing JSON file path.");
             plugin::execute(&bot, path).await.map_err(MainError::from)
         }
-        "diff" | "core" => diff::execute(&bot).await.map_err(MainError::from),
+        "diff" | "core" => {
+            let base = args.next();
+            let head = args.next();
+            diff::execute(&bot, base, head)
+                .await
+                .map_err(MainError::from)
+        }
         unknown => Err(MainError::UnknownAction(unknown.into())),
     }
 }

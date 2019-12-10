@@ -1,15 +1,21 @@
 use crate::bot::{Bot, BotError};
-use std::process::Command;
+use crate::github::{
+    self,
+    compare::{compare, Compare},
+};
+use itertools::Itertools;
 use thiserror::Error;
-use tokio::fs;
 
-pub async fn execute(bot: &Bot) -> Result<(), DiffError> {
-    let (head, diff, hitokoto) = futures::join!(head(), diff(), hitokoto());
-    let head = head?;
-    let diff = diff.map(analyze_diff)?;
+pub async fn execute(
+    bot: &Bot,
+    base: Option<String>,
+    head: Option<String>,
+) -> Result<(), DiffError> {
+    let (git, hitokoto) = futures::join!(git(base, head), hitokoto());
+    let git = git?;
     let hitokoto = hitokoto.unwrap_or_default();
 
-    let message = head + "\n" + &diff + &hitokoto;
+    let message = git + &hitokoto;
     bot.send_message(message, "HTML")
         .await
         .map_err(DiffError::from)
@@ -17,14 +23,28 @@ pub async fn execute(bot: &Bot) -> Result<(), DiffError> {
 
 #[derive(Error, Debug)]
 pub enum DiffError {
-    #[error("IO error.")]
-    IO(#[from] std::io::Error),
-
-    #[error("Failed to collect stdout.")]
-    Stdout(#[from] std::string::FromUtf8Error),
+    #[error("Network error: {0}")]
+    Network(#[from] reqwest::Error),
 
     #[error("Bot error.")]
     Bot(#[from] BotError),
+}
+
+async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwest::Error> {
+    let base = if let Some(base) = base {
+        base
+    } else {
+        github::last_checked_commit()
+            .await?
+            .unwrap_or_else(|| String::from("HEAD^"))
+    };
+    let head = head.unwrap_or_else(|| "HEAD".into());
+
+    let Compare { commits, files } = compare(&base, &head).await?;
+    let log = format_log(&commits);
+    let analysis = analyze_diff(diff(&files));
+
+    Ok(format!("{}\n{}", log, analysis))
 }
 
 #[derive(Clone)]
@@ -34,22 +54,18 @@ struct Diff {
     composer: bool,
 }
 
-async fn diff() -> Result<Diff, DiffError> {
-    Command::new("git")
-        .args(&["difftool", "--output=diff.txt", "--name-only", "HEAD^"])
-        .output()?;
-
+fn diff(files: &[github::compare::File]) -> Diff {
     let mut diff = Diff {
         build: false,
         yarn: false,
         composer: false,
     };
 
-    let diff_text = String::from_utf8(fs::read("diff.txt").await?)?;
-    for change in diff_text.lines() {
-        match change {
+    for file in files {
+        match &*file.filename {
             "package.json" | "yarn.lock" => {
                 diff.yarn = true;
+                diff.build = true;
             }
             "composer.json" | "composer.lock" => {
                 diff.composer = true;
@@ -62,7 +78,7 @@ async fn diff() -> Result<Diff, DiffError> {
         }
     }
 
-    Ok(diff)
+    diff
 }
 
 fn analyze_diff(
@@ -77,7 +93,7 @@ fn analyze_diff(
 
         let mut rng = rand::thread_rng();
         let choices = vec![
-            "您可以直接拉取此 commit。",
+            "您可以直接拉取新 commit。",
             "还在犹豫什么，赶快拿起 <code>git pull</code> 订购吧！",
             "是朋友，就 <code>git pull</code>。介是你没有用过的船新版本。",
         ];
@@ -112,14 +128,16 @@ fn analyze_diff(
     format!("拉取此 commit 后，您需要：\n{}\n{}", front, back)
 }
 
-async fn head() -> Result<String, DiffError> {
-    let command = Command::new("git")
-        .args(&["log", "--pretty=**%h**: %s", "-1"])
-        .output()?;
+fn format_log(log: &[github::Commit]) -> String {
+    log.iter()
+        .map(|commit| {
+            let message = commit.commit.message.replace('\n', " ");
+            let mut sha = commit.sha.clone();
+            sha.truncate(8);
 
-    String::from_utf8(command.stdout)
-        .map(md2html)
-        .map_err(DiffError::from)
+            md2html(format!("**{}**: {}", sha, message))
+        })
+        .join("\n")
 }
 
 async fn hitokoto() -> Result<String, reqwest::Error> {
@@ -146,6 +164,59 @@ fn md2html(text: String) -> String {
 }
 
 #[test]
+fn test_diff() {
+    use github::compare::File;
+
+    let files = &[File {
+        filename: "package.json".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(diff_result.build);
+    assert!(diff_result.yarn);
+    assert!(!diff_result.composer);
+
+    let files = &[File {
+        filename: "yarn.lock".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(diff_result.build);
+    assert!(diff_result.yarn);
+    assert!(!diff_result.composer);
+
+    let files = &[File {
+        filename: "composer.json".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(!diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(diff_result.composer);
+
+    let files = &[File {
+        filename: "composer.lock".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(!diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(diff_result.composer);
+
+    let files = &[File {
+        filename: "resources/assets/src/index.ts".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(!diff_result.composer);
+
+    let files = &[File {
+        filename: "resources/assets/test/setup.ts".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(!diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(!diff_result.composer);
+}
+
+#[test]
 fn test_analyze_diff() {
     let mut diff = Diff {
         build: false,
@@ -163,6 +234,11 @@ fn test_analyze_diff() {
     assert!(analysis.contains("yarn"));
     assert!(analysis.contains("pwsh"));
 
+    diff.build = true;
+    let analysis = analyze_diff(diff.clone());
+    assert!(analysis.contains("yarn"));
+    assert!(analysis.contains("pwsh"));
+
     diff.yarn = false;
     diff.build = true;
     let analysis = analyze_diff(diff.clone());
@@ -175,25 +251,30 @@ fn test_analyze_diff() {
 }
 
 #[test]
-fn test_head() {
-    use tokio::runtime::current_thread::Runtime;
+fn test_format_log() {
+    use github::{Commit, CommitDetail};
 
-    let mut runtime = Runtime::new().unwrap();
-    runtime.block_on(async move {
-        let output = head().await.unwrap();
-        assert!(!output.contains("<p>"));
-        assert!(!output.contains("</p>"));
+    let log = &[
+        Commit {
+            sha: "123456789".into(),
+            commit: CommitDetail {
+                message: "kumiko".into(),
+            },
+        },
+        Commit {
+            sha: "987654321".into(),
+            commit: CommitDetail {
+                message: "reina".into(),
+            },
+        },
+    ];
 
-        let parts = output.split(':').collect::<Vec<&str>>();
-        let left = parts[0];
-        let right = parts[1];
+    let line1 = "<strong>12345678</strong>: kumiko";
+    let line2 = "<strong>98765432</strong>: reina";
+    let expected = format!("{}\n{}", line1, line2);
 
-        assert!(left.starts_with("<strong>"));
-        assert!(left.ends_with("</strong>"));
-        assert_eq!(left.len(), 24);
-
-        assert!(right.starts_with(' '));
-    });
+    let output = format_log(log);
+    assert_eq!(&expected, &output);
 }
 
 #[test]
