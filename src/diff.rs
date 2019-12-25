@@ -111,22 +111,19 @@ fn analyze_diff(
             .unwrap();
     }
 
-    let front: &'static str;
-    let back: &'static str;
-
-    if yarn {
-        front = "先执行 <code>yarn</code>，然后执行 <code>pwsh ./scripts/build.ps1</code>。";
+    let front = if yarn {
+        "先执行 <code>yarn</code>，然后执行 <code>pwsh ./scripts/build.ps1</code>。"
     } else if build {
-        front = "执行 <code>pwsh ./scripts/build.ps1</code>。";
+        "执行 <code>pwsh ./scripts/build.ps1</code>。"
     } else {
-        front = "";
-    }
+        ""
+    };
 
-    if composer {
-        back = "执行 <code>composer install</code>。";
+    let back = if composer {
+        "执行 <code>composer install</code>。"
     } else {
-        back = "";
-    }
+        ""
+    };
 
     format!("拉取此 commit 后，您需要：\n{}\n{}", front, back)
 }
