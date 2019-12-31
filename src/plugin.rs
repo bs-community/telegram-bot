@@ -51,10 +51,9 @@ pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDat
         .map_err(PluginDataError::from)
 }
 
-#[test]
-fn test_fetch() {
+#[tokio::test]
+async fn test_fetch() {
     use tokio::io::AsyncWriteExt;
-    use tokio::runtime::current_thread::Runtime;
 
     let data = vec![
         Plugin {
@@ -71,19 +70,16 @@ fn test_fetch() {
     let mut path = std::env::temp_dir();
     path.push("plugins.json");
 
-    let mut runtime = Runtime::new().unwrap();
-    runtime.block_on(async move {
-        {
-            let mut file = fs::File::create(&path).await.unwrap();
-            file.write_all(&*json).await.unwrap();
-        }
+    {
+        let mut file = fs::File::create(&path).await.unwrap();
+        file.write_all(&*json).await.unwrap();
+    }
 
-        let list = fetch(&path).await.unwrap();
-        assert_eq!(list[0].name, "kumiko");
-        assert_eq!(list[0].version, "1.2.3");
-        assert_eq!(list[1].name, "reina");
-        assert_eq!(list[1].version, "4.5.6");
+    let list = fetch(&path).await.unwrap();
+    assert_eq!(list[0].name, "kumiko");
+    assert_eq!(list[0].version, "1.2.3");
+    assert_eq!(list[1].name, "reina");
+    assert_eq!(list[1].version, "4.5.6");
 
-        fs::remove_file(&path).await.unwrap();
-    });
+    fs::remove_file(&path).await.unwrap();
 }

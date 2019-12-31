@@ -18,8 +18,8 @@ itertools = "0.8"
 log = "0.4"
 pulldown-cmark = "0.6"
 rand = "0.7"
-reqwest = { version = "=0.10.0-alpha.2", features = ["json", "tls"] }
+reqwest = { version = "0.10", features = ["json", "rustls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
-tokio = "=0.2.0-alpha.6" # TODO: update to 0.2.x once "reqwest" is ready
+tokio = { version = "0.2", features = ["fs", "macros"] }
