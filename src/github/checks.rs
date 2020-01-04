@@ -1,4 +1,4 @@
-use super::BASE_URL;
+use super::{BASE_URL, USER_AGENT};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -13,7 +13,10 @@ struct CheckSuites {
 }
 
 pub async fn last_checked_commit() -> Result<Option<String>, reqwest::Error> {
-    let client = reqwest::ClientBuilder::new().gzip(true).build()?;
+    let client = reqwest::ClientBuilder::new()
+        .gzip(true)
+        .user_agent(USER_AGENT)
+        .build()?;
     let CheckSuites {
         total_count,
         check_suites,
