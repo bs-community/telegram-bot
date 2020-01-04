@@ -15,7 +15,6 @@ pub struct Compare {
 pub async fn compare(base: &str, head: &str) -> Result<Compare, reqwest::Error> {
     let url = format!("{}/compare/{}...{}", BASE_URL, base, head);
     let client = reqwest::ClientBuilder::new()
-        .gzip(true)
         .user_agent(USER_AGENT)
         .build()?;
 

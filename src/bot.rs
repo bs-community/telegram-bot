@@ -62,7 +62,7 @@ impl Bot {
             parse_mode, text
         );
 
-        let client = reqwest::ClientBuilder::new().gzip(true).build()?;
+        let client = reqwest::ClientBuilder::new().build()?;
         let TelegramResponse { ok, description } = client
             .post(&self.url)
             .json(&SendMessage {

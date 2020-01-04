@@ -14,7 +14,6 @@ struct CheckSuites {
 
 pub async fn last_checked_commit() -> Result<Option<String>, reqwest::Error> {
     let client = reqwest::ClientBuilder::new()
-        .gzip(true)
         .user_agent(USER_AGENT)
         .build()?;
     let CheckSuites {
