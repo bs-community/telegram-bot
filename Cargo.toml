@@ -1,6 +1,6 @@
 [package]
 name = "bs-telegram-bot"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Pig Fang <g-plane@hotmail.com>"]
 edition = "2018"
 publish = false
