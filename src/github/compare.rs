@@ -14,6 +14,7 @@ pub struct Compare {
 
 pub async fn compare(base: &str, head: &str) -> Result<Compare, reqwest::Error> {
     let url = format!("{}/compare/{}...{}", BASE_URL, base, head);
+    let client = reqwest::ClientBuilder::new().gzip(true).build()?;
 
-    reqwest::get(&url).await?.json().await
+    client.get(&url).send().await?.json().await
 }

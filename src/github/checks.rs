@@ -13,7 +13,7 @@ struct CheckSuites {
 }
 
 pub async fn last_checked_commit() -> Result<Option<String>, reqwest::Error> {
-    let client = reqwest::Client::new();
+    let client = reqwest::ClientBuilder::new().gzip(true).build()?;
     let CheckSuites {
         total_count,
         check_suites,
