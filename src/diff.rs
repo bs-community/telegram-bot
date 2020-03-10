@@ -94,7 +94,7 @@ fn analyze_diff(
         migration,
     }: Diff,
 ) -> String {
-    if !build && !yarn && !composer {
+    if !build && !yarn && !composer && !migration {
         use rand::seq::IteratorRandom;
 
         let mut rng = rand::thread_rng();
@@ -179,6 +179,15 @@ fn md2html(text: String) -> String {
 #[test]
 fn test_diff() {
     use github::compare::File;
+
+    let files = &[File {
+        filename: "tests".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(!diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "package.json".into(),
