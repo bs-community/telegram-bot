@@ -73,6 +73,9 @@ fn diff(files: &[github::compare::File]) -> Diff {
             "composer.json" | "composer.lock" => {
                 diff.composer = true;
             }
+            "webpack.config.js" => {
+                diff.build = true;
+            }
             change => {
                 if change.starts_with("resources/assets/src") {
                     diff.build = true;
@@ -198,6 +201,14 @@ fn test_diff() {
     assert!(!diff_result.build);
     assert!(!diff_result.yarn);
     assert!(diff_result.composer);
+
+    let files = &[File {
+        filename: "webpack.config.js".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(!diff_result.composer);
 
     let files = &[File {
         filename: "resources/assets/src/index.ts".into(),
