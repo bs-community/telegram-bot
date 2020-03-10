@@ -55,6 +55,7 @@ struct Diff {
     build: bool,
     yarn: bool,
     composer: bool,
+    migration: bool,
 }
 
 fn diff(files: &[github::compare::File]) -> Diff {
@@ -75,6 +76,8 @@ fn diff(files: &[github::compare::File]) -> Diff {
             change => {
                 if change.starts_with("resources/assets/src") {
                     diff.build = true;
+                } else if change.starts_with("database/migrations") {
+                    diff.migration = true;
                 }
             }
         }
@@ -88,6 +91,7 @@ fn analyze_diff(
         build,
         yarn,
         composer,
+        migration,
     }: Diff,
 ) -> String {
     if !build && !yarn && !composer {
@@ -124,7 +128,17 @@ fn analyze_diff(
         ""
     };
 
-    format!("拉取此 commit 后，您需要：\n{}\n{}", front, back)
+    let db = if migration {
+        "执行 <code>php artisan migrate</code>。"
+    } else {
+        ""
+    };
+
+    let messages = vec![front, back, db]
+        .into_iter()
+        .filter(|msg| *msg != "")
+        .join("\n");
+    format!("拉取此 commit 后，您需要：\n{}", messages)
 }
 
 fn format_log(log: &[github::Commit]) -> String {
@@ -173,6 +187,7 @@ fn test_diff() {
     assert!(diff_result.build);
     assert!(diff_result.yarn);
     assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "yarn.lock".into(),
@@ -181,6 +196,7 @@ fn test_diff() {
     assert!(diff_result.build);
     assert!(diff_result.yarn);
     assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "composer.json".into(),
@@ -189,6 +205,7 @@ fn test_diff() {
     assert!(!diff_result.build);
     assert!(!diff_result.yarn);
     assert!(diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "composer.lock".into(),
@@ -197,6 +214,7 @@ fn test_diff() {
     assert!(!diff_result.build);
     assert!(!diff_result.yarn);
     assert!(diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "webpack.config.js".into(),
@@ -205,6 +223,7 @@ fn test_diff() {
     assert!(diff_result.build);
     assert!(!diff_result.yarn);
     assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "resources/assets/src/index.ts".into(),
@@ -213,6 +232,7 @@ fn test_diff() {
     assert!(diff_result.build);
     assert!(!diff_result.yarn);
     assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
 
     let files = &[File {
         filename: "resources/assets/test/setup.ts".into(),
@@ -221,6 +241,16 @@ fn test_diff() {
     assert!(!diff_result.build);
     assert!(!diff_result.yarn);
     assert!(!diff_result.composer);
+    assert!(!diff_result.migration);
+
+    let files = &[File {
+        filename: "database/migrations/a.php".into(),
+    }];
+    let diff_result = diff(files);
+    assert!(!diff_result.build);
+    assert!(!diff_result.yarn);
+    assert!(!diff_result.composer);
+    assert!(diff_result.migration);
 }
 
 #[test]
@@ -251,6 +281,11 @@ fn test_analyze_diff() {
     diff.composer = true;
     let analysis = analyze_diff(diff.clone());
     assert!(analysis.contains("composer install"));
+
+    diff.composer = false;
+    diff.migration = true;
+    let analysis = analyze_diff(diff.clone());
+    assert!(analysis.contains("php artisan migrate"));
 }
 
 #[test]
