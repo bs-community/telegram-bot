@@ -50,7 +50,7 @@ async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwe
     Ok(format!("{}\n{}", log, analysis))
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Diff {
     build: bool,
     yarn: bool,
@@ -58,11 +58,7 @@ struct Diff {
 }
 
 fn diff(files: &[github::compare::File]) -> Diff {
-    let mut diff = Diff {
-        build: false,
-        yarn: false,
-        composer: false,
-    };
+    let mut diff = Diff::default();
 
     for file in files {
         match &*file.filename {
@@ -229,11 +225,7 @@ fn test_diff() {
 
 #[test]
 fn test_analyze_diff() {
-    let mut diff = Diff {
-        build: false,
-        yarn: false,
-        composer: false,
-    };
+    let mut diff = Diff::default();
 
     let analysis = analyze_diff(diff.clone());
     assert!(!analysis.contains("yarn"));
