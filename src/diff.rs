@@ -11,12 +11,8 @@ pub async fn execute(
     base: Option<String>,
     head: Option<String>,
 ) -> Result<(), DiffError> {
-    let (git, hitokoto) = futures::join!(git(base, head), hitokoto());
-    let git = git?;
-    let hitokoto = hitokoto.unwrap_or_default();
-
-    let message = git + &hitokoto;
-    bot.send_message(message, "HTML")
+    let git = git(base, head).await?;
+    bot.send_message(git, "HTML")
         .await
         .map_err(DiffError::from)
 }
@@ -151,14 +147,6 @@ fn format_log(log: &[github::Commit]) -> String {
             md2html(format!("**{}**: {}", sha, message))
         })
         .join("\n")
-}
-
-async fn hitokoto() -> Result<String, reqwest::Error> {
-    reqwest::get("https://v1.hitokoto.cn/?encode=text")
-        .await?
-        .text()
-        .await
-        .map(|text| format!("\n---\n{}", text))
 }
 
 fn md2html(text: String) -> String {
