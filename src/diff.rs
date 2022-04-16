@@ -45,7 +45,7 @@ async fn git(
     let Compare { commits, files } = compare(&base, &head).await?;
     let log = format_log(&commits);
     let analysis = analyze_diff(diff(&files));
-    let artifact = get_artifact_link(run_id);
+    let artifact = format!("<a href=\"{}\">快照下载</a>", get_artifact_link(run_id));
 
     Ok(format!("{}\n{}\n{}", log, analysis, artifact))
 }
