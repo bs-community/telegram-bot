@@ -46,7 +46,8 @@ async fn main() -> Result<(), MainError> {
         "diff" | "core" => {
             let base = args.next();
             let head = args.next();
-            diff::execute(&bot, base, head)
+            let run_id = env::var("GITHUB_RUN_ID").ok();
+            diff::execute(&bot, base, head, run_id)
                 .await
                 .map_err(MainError::from)
         }

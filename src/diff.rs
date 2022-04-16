@@ -10,11 +10,10 @@ pub async fn execute(
     bot: &Bot,
     base: Option<String>,
     head: Option<String>,
+    run_id: Option<String>,
 ) -> Result<(), DiffError> {
-    let git = git(base, head).await?;
-    bot.send_message(git, "HTML")
-        .await
-        .map_err(DiffError::from)
+    let git = git(base, head, run_id).await?;
+    bot.send_message(git, "HTML").await.map_err(DiffError::from)
 }
 
 #[derive(Error, Debug)]
@@ -26,7 +25,11 @@ pub enum DiffError {
     Bot(#[from] BotError),
 }
 
-async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwest::Error> {
+async fn git(
+    base: Option<String>,
+    head: Option<String>,
+    run_id: Option<String>,
+) -> Result<String, reqwest::Error> {
     let base = if let Some(base) = base {
         base
     } else {
@@ -42,8 +45,9 @@ async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwe
     let Compare { commits, files } = compare(&base, &head).await?;
     let log = format_log(&commits);
     let analysis = analyze_diff(diff(&files));
+    let artifact = get_artifact_link(run_id);
 
-    Ok(format!("{}\n{}", log, analysis))
+    Ok(format!("{}\n{}\n{}", log, analysis, artifact))
 }
 
 #[derive(Clone, Default)]
@@ -147,6 +151,18 @@ fn format_log(log: &[github::Commit]) -> String {
             md2html(format!("**{}**: {}", sha, message))
         })
         .join("\n")
+}
+
+fn get_artifact_link(run_id: Option<String>) -> String {
+    if let Some(run_id) = run_id {
+        format!(
+            "https://nightly.link/bs-community/blessing-skin-server/actions/runs/{}/artifact.zip",
+            run_id
+        )
+    } else {
+        "https://nightly.link/bs-community/blessing-skin-server/workflows/CI/dev/artifact.zip"
+            .to_string()
+    }
 }
 
 fn md2html(text: String) -> String {
