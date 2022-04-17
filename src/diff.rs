@@ -2,6 +2,7 @@ use crate::bot::{Bot, BotError};
 use crate::github::{
     self,
     compare::{compare, Compare},
+    last_run_id,
 };
 use itertools::Itertools;
 use thiserror::Error;
@@ -10,9 +11,8 @@ pub async fn execute(
     bot: &Bot,
     base: Option<String>,
     head: Option<String>,
-    run_id: Option<String>,
 ) -> Result<(), DiffError> {
-    let git = git(base, head, run_id).await?;
+    let git = git(base, head).await?;
     bot.send_message(git, "HTML").await.map_err(DiffError::from)
 }
 
@@ -25,11 +25,7 @@ pub enum DiffError {
     Bot(#[from] BotError),
 }
 
-async fn git(
-    base: Option<String>,
-    head: Option<String>,
-    run_id: Option<String>,
-) -> Result<String, reqwest::Error> {
+async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwest::Error> {
     let base = if let Some(base) = base {
         base
     } else {
@@ -45,7 +41,7 @@ async fn git(
     let Compare { commits, files } = compare(&base, &head).await?;
     let log = format_log(&commits);
     let analysis = analyze_diff(diff(&files));
-    let artifact = format!("<a href=\"{}\">快照下载</a>", get_artifact_link(run_id));
+    let artifact = format!("<a href=\"{}\">快照下载</a>", get_artifact_link().await);
 
     Ok(format!("{}\n{}\n{}", log, analysis, artifact))
 }
@@ -153,16 +149,15 @@ fn format_log(log: &[github::Commit]) -> String {
         .join("\n")
 }
 
-fn get_artifact_link(run_id: Option<String>) -> String {
-    if let Some(run_id) = run_id {
-        format!(
-            "https://nightly.link/bs-community/blessing-skin-server/actions/runs/{}/artifact.zip",
-            run_id
-        )
-    } else {
-        "https://nightly.link/bs-community/blessing-skin-server/workflows/CI/dev/artifact.zip"
-            .to_string()
-    }
+async fn get_artifact_link() -> String {
+    let run_id = last_run_id(github::WORKFLOW_ID, "dev")
+        .await
+        .expect("Failed to get last run id")
+        .unwrap();
+    format!(
+        "https://nightly.link/bs-community/blessing-skin-server/actions/runs/{}/artifact.zip",
+        run_id
+    )
 }
 
 fn md2html(text: String) -> String {
