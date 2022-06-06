@@ -1,31 +1,21 @@
-use crate::bot::{Bot, BotError};
+use crate::bot::{Bot };
 use crate::github::{
     self,
     compare::{compare, Compare},
     last_run_id,
 };
 use itertools::Itertools;
-use thiserror::Error;
 
 pub async fn execute(
     bot: &Bot,
     base: Option<String>,
     head: Option<String>,
-) -> Result<(), DiffError> {
+) -> anyhow::Result<()> {
     let git = git(base, head).await?;
-    bot.send_message(git, "HTML").await.map_err(DiffError::from)
+    bot.send_message(git, "HTML").await
 }
 
-#[derive(Error, Debug)]
-pub enum DiffError {
-    #[error("Network error: {0}")]
-    Network(#[from] reqwest::Error),
-
-    #[error("Bot error.")]
-    Bot(#[from] BotError),
-}
-
-async fn git(base: Option<String>, head: Option<String>) -> Result<String, reqwest::Error> {
+async fn git(base: Option<String>, head: Option<String>) -> anyhow::Result<String> {
     let base = if let Some(base) = base {
         base
     } else {

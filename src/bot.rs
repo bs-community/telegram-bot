@@ -1,24 +1,8 @@
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 pub struct Bot {
     url: String,
     chat_id: String,
-}
-
-#[derive(Error, Debug)]
-pub enum BotError {
-    #[error("Network error related to `reqwest`.")]
-    Network(#[from] reqwest::Error),
-
-    #[error("Failed to parse JSON from Telegram response.")]
-    JsonParsing(#[from] serde_json::Error),
-
-    #[error("Telegram error: {0}")]
-    Telegram(String),
-
-    #[error("Telegram error: unknown")]
-    TelegramUnknown,
 }
 
 #[derive(Deserialize)]
@@ -49,7 +33,7 @@ impl Bot {
         }
     }
 
-    pub async fn send_message<S, M>(&self, text: S, parse_mode: M) -> Result<(), BotError>
+    pub async fn send_message<S, M>(&self, text: S, parse_mode: M) -> anyhow::Result<()>
     where
         S: Into<String>,
         M: Into<Option<&'static str>>,
@@ -82,12 +66,10 @@ impl Bot {
         } else {
             match description {
                 Some(description) => {
-                    error!("Telegram reported an error: {}", description);
-                    Err(BotError::Telegram(description))
+                    Err(anyhow::Error::msg(format!("Telegram reported an error: {}", description)))
                 }
                 None => {
-                    error!("An unknown Telegram error occurred.");
-                    Err(BotError::TelegramUnknown)
+                    Err(anyhow::Error::msg("An unknown Telegram error occurred."))
                 }
             }
         }

@@ -1,9 +1,8 @@
-use crate::bot::{Bot, BotError};
+use crate::bot::{Bot};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::convert::AsRef;
 use std::path::Path;
-use thiserror::Error;
 use tokio::fs;
 
 #[derive(Deserialize, Serialize)]
@@ -14,26 +13,14 @@ struct Plugin {
 
 type PluginsList = Vec<Plugin>;
 
-#[derive(Error, Debug)]
-pub enum PluginDataError {
-    #[error("Failed to read file.")]
-    Filesystem(#[from] tokio::io::Error),
-
-    #[error("Failed to parse JSON file.")]
-    JsonParsing(#[from] serde_json::Error),
-
-    #[error("Bot error: {0}")]
-    Bot(#[from] BotError),
-}
-
-async fn fetch<P: AsRef<Path>>(path: P) -> Result<PluginsList, PluginDataError> {
+async fn fetch<P: AsRef<Path>>(path: P) -> anyhow::Result<PluginsList> {
     let content = fs::read(path).await?;
     let list = serde_json::from_slice::<PluginsList>(&content)?;
 
     Ok(list)
 }
 
-pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDataError> {
+pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> anyhow::Result<()> {
     let list = fetch(path).await?;
     if list.is_empty() {
         info!("No plugins have been updated.");
@@ -48,7 +35,7 @@ pub async fn execute<P: AsRef<Path>>(bot: &Bot, path: P) -> Result<(), PluginDat
 
     bot.send_message(text, None)
         .await
-        .map_err(PluginDataError::from)
+        .map_err(anyhow::Error::from)
 }
 
 #[tokio::test]
