@@ -132,9 +132,9 @@ fn format_log(log: &[github::Commit]) -> String {
         .map(|commit| {
             let message = commit.commit.message.lines().next().unwrap_or(&commit.commit.message);
             let mut sha = commit.sha.clone();
-            sha.truncate(8);
+            sha.truncate(7);
 
-            md2html(format!("**{}**: {}", sha, message))
+            md2html(format!("[{}](https://github.com/bs-community/blessing-skin-server/commit/{}): {}", sha, commit.sha, message))
         })
         .join("\n")
 }
@@ -292,21 +292,21 @@ fn test_format_log() {
 
     let log = &[
         Commit {
-            sha: "123456789".into(),
+            sha: "e5096d9c3847cd1fc3a90edc7e6467308aaf8abf".into(),
             commit: CommitDetail {
                 message: "kumiko".into(),
             },
         },
         Commit {
-            sha: "987654321".into(),
+            sha: "262e5843c3cdc5fd68afc044526c40f8dfe0f089".into(),
             commit: CommitDetail {
                 message: "reina".into(),
             },
         },
     ];
 
-    let line1 = "<strong>12345678</strong>: kumiko";
-    let line2 = "<strong>98765432</strong>: reina";
+    let line1 = "<a href="https://github.com/bs-community/blessing-skin-server/commit/e5096d9c3847cd1fc3a90edc7e6467308aaf8abf">e5096d9</a>: kumiko";
+    let line2 = "<a href="https://github.com/bs-community/blessing-skin-server/commit/262e5843c3cdc5fd68afc044526c40f8dfe0f089">262e584</a>: reina";
     let expected = format!("{}\n{}", line1, line2);
 
     let output = format_log(log);
@@ -319,4 +319,5 @@ fn test_md2html() {
     assert_eq!("&quot;text&quot;", &md2html(String::from("\"text\"")));
     assert_eq!("&amp;", &md2html(String::from("&")));
     assert_eq!("<strong>bold</strong>", &md2html(String::from("**bold**")));
+    assert_eq!("<a href=\"https://site.com/\">link</a>", &md2html(String::from("[link](https://site.com/)")));
 }
