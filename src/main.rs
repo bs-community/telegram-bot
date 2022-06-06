@@ -24,7 +24,7 @@ enum MainError {
 
 #[tokio::main]
 async fn main() -> Result<(), MainError> {
-    env_logger::from_env(Env::default().default_filter_or("bot=debug")).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("bot=debug")).init();
 
     info!("BS Telegram Bot: v{}", env!("CARGO_PKG_VERSION"));
 
