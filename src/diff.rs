@@ -305,8 +305,8 @@ fn test_format_log() {
         },
     ];
 
-    let line1 = "<a href="https://github.com/bs-community/blessing-skin-server/commit/e5096d9c3847cd1fc3a90edc7e6467308aaf8abf">e5096d9</a>: kumiko";
-    let line2 = "<a href="https://github.com/bs-community/blessing-skin-server/commit/262e5843c3cdc5fd68afc044526c40f8dfe0f089">262e584</a>: reina";
+    let line1 = "<a href=\"https://github.com/bs-community/blessing-skin-server/commit/e5096d9c3847cd1fc3a90edc7e6467308aaf8abf\">e5096d9</a>: kumiko";
+    let line2 = "<a href=\"https://github.com/bs-community/blessing-skin-server/commit/262e5843c3cdc5fd68afc044526c40f8dfe0f089\">262e584</a>: reina";
     let expected = format!("{}\n{}", line1, line2);
 
     let output = format_log(log);
