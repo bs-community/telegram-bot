@@ -130,7 +130,7 @@ fn analyze_diff(
 fn format_log(log: &[github::Commit]) -> String {
     log.iter()
         .map(|commit| {
-            let message = commit.commit.message.replace('\n', " ");
+            let message = commit.commit.message.lines().next().unwrap_or(&commit.commit.message);
             let mut sha = commit.sha.clone();
             sha.truncate(8);
 
