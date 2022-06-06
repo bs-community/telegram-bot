@@ -122,7 +122,7 @@ fn analyze_diff(
 
     let messages = vec![front, back, db]
         .into_iter()
-        .filter(|msg| *msg != "")
+        .filter(|msg| !msg.is_empty())
         .join("\n");
     format!("拉取此 commit 后，您需要：\n{}", messages)
 }
@@ -153,7 +153,7 @@ async fn get_artifact_link() -> String {
 fn md2html(text: String) -> String {
     use pulldown_cmark::{html, Parser};
 
-    let text = text.replace("<", "&lt;").replace(">", "&gt;");
+    let text = text.replace('<', "&lt;").replace('>', "&gt;");
     let parser = Parser::new(&text);
     let mut output = String::new();
     html::push_html(&mut output, parser);

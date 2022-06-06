@@ -70,7 +70,7 @@ pub async fn last_run_id(id: &u16, branch: &str) -> Result<Option<u64>, reqwest:
     } else {
         workflow_runs
             .into_iter()
-            .find(|run| run.workflow_id == id.to_owned())
+            .find(|run| &run.workflow_id == id)
             .map(|run| run.id)
     };
     Ok(run_id)
