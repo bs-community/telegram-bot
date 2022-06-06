@@ -134,7 +134,7 @@ fn format_log(log: &[github::Commit]) -> String {
             let mut sha = commit.sha.clone();
             sha.truncate(7);
 
-            md2html(format!("[{}](https://github.com/bs-community/blessing-skin-server/commit/{}): {}", sha, commit.sha, message))
+            md2html(format!("[{sha}](https://github.com/bs-community/blessing-skin-server/commit/{}): {message}", commit.sha))
         })
         .join("\n")
 }
