@@ -56,7 +56,7 @@ fn diff(files: &[github::compare::File]) -> Diff {
             "composer.json" | "composer.lock" => {
                 diff.composer = true;
             }
-            "webpack.config.js" => {
+            "webpack.config.ts" => {
                 diff.build = true;
             }
             change => {
