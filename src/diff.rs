@@ -215,7 +215,7 @@ fn test_diff() {
     assert!(!diff_result.migration);
 
     let files = &[File {
-        filename: "webpack.config.js".into(),
+        filename: "webpack.config.ts".into(),
     }];
     let diff_result = diff(files);
     assert!(diff_result.build);
