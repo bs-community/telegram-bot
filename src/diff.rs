@@ -134,7 +134,7 @@ fn format_log(log: &[github::Commit]) -> String {
             let mut sha = commit.sha.clone();
             sha.truncate(7);
 
-            md2html(format!("[{sha}](https://github.com/bs-community/blessing-skin-server/commit/{}): {message}", commit.sha))
+            md2html(format!("**{}**: {}", sha, message))
         })
         .join("\n")
 }
@@ -292,21 +292,21 @@ fn test_format_log() {
 
     let log = &[
         Commit {
-            sha: "e5096d9c3847cd1fc3a90edc7e6467308aaf8abf".into(),
+            sha: "123456789".into(),
             commit: CommitDetail {
                 message: "kumiko".into(),
             },
         },
         Commit {
-            sha: "262e5843c3cdc5fd68afc044526c40f8dfe0f089".into(),
+            sha: "987654321".into(),
             commit: CommitDetail {
                 message: "reina".into(),
             },
         },
     ];
 
-    let line1 = "<a href=\"https://github.com/bs-community/blessing-skin-server/commit/e5096d9c3847cd1fc3a90edc7e6467308aaf8abf\">e5096d9</a>: kumiko";
-    let line2 = "<a href=\"https://github.com/bs-community/blessing-skin-server/commit/262e5843c3cdc5fd68afc044526c40f8dfe0f089\">262e584</a>: reina";
+    let line1 = "<strong>e5096d9</strong>: kumiko";
+    let line2 = "<strong>262e584</strong>: reina";
     let expected = format!("{}\n{}", line1, line2);
 
     let output = format_log(log);
@@ -319,5 +319,4 @@ fn test_md2html() {
     assert_eq!("&quot;text&quot;", &md2html(String::from("\"text\"")));
     assert_eq!("&amp;", &md2html(String::from("&")));
     assert_eq!("<strong>bold</strong>", &md2html(String::from("**bold**")));
-    assert_eq!("<a href=\"https://site.com/\">link</a>", &md2html(String::from("[link](https://site.com/)")));
 }
