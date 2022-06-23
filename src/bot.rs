@@ -17,7 +17,6 @@ struct SendMessage {
     text: String,
     parse_mode: &'static str,
     disable_notification: bool,
-    disable_web_page_preview: bool,
 }
 
 impl Bot {
@@ -55,7 +54,6 @@ impl Bot {
                 text,
                 parse_mode,
                 disable_notification: true,
-                disable_web_page_preview: true,
             })
             .send()
             .await?
