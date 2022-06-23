@@ -292,13 +292,13 @@ fn test_format_log() {
 
     let log = &[
         Commit {
-            sha: "123456789".into(),
+            sha: "e5096d9c3847cd1fc3a90edc7e6467308aaf8abf".into(),
             commit: CommitDetail {
                 message: "kumiko".into(),
             },
         },
         Commit {
-            sha: "987654321".into(),
+            sha: "262e5843c3cdc5fd68afc044526c40f8dfe0f089".into(),
             commit: CommitDetail {
                 message: "reina".into(),
             },
